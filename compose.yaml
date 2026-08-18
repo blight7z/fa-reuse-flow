@@ -1,0 +1,63 @@
+name: fa-reuse-flow
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-fa_reuse_flow}
+      POSTGRES_USER: ${POSTGRES_USER:-fa_reuse}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fa_reuse_local_only}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-fa_reuse} -d ${POSTGRES_DB:-fa_reuse_flow}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: ./apps/api
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-fa_reuse}:${POSTGRES_PASSWORD:-fa_reuse_local_only}@db:5432/${POSTGRES_DB:-fa_reuse_flow}
+      SESSION_SECRET: ${SESSION_SECRET:-local-demo-secret-change-me}
+      SESSION_COOKIE_SECURE: "false"
+      APP_TIMEZONE: Asia/Bangkok
+      BUSINESS_HOLIDAYS: ${BUSINESS_HOLIDAYS:-}
+      UPLOAD_DIR: /app/data/uploads
+      CORS_ORIGINS: http://localhost:3000
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    ports:
+      - "8000:8000"
+    volumes:
+      - uploads_data:/app/data/uploads
+
+  web:
+    build:
+      context: ./apps/web
+      args:
+        INTERNAL_API_URL: http://api:8000
+    environment:
+      INTERNAL_API_URL: http://api:8000
+      NEXT_PUBLIC_API_BASE_URL: /api/v1
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/login').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    ports:
+      - "3000:3000"
+
+volumes:
+  postgres_data:
+  uploads_data:

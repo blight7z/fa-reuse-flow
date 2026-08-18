@@ -1,0 +1,51 @@
+# Environment and secrets
+.env
+.env.local
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+pytest-cache-files-*/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.venv/
+.venv-test/
+venv/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
+*.inspect.ndjson
+
+# Runtime data
+data/
+uploads/
+test_uploads/
+*.db
+*.sqlite
+*.sqlite3
+
+# Build and temporary artifacts
+tmp/
+.tmp/
+dist/
+build/
+*.log
+
+# Local project notes
+docs/
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
